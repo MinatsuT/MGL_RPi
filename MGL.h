@@ -52,7 +52,7 @@ extern "C" {
 #define FB_X(a) ((a) / GRP_W * 2.0 - 1.0)
 #define FB_Y(a) (-((a) / GRP_H * 2.0 - 1.0))
 #define TEX_U(a) ((a) / (float)GRP_W)
-#define TEX_V(a) (1 - ((a) / (float)GRP_H))
+#define TEX_V(a) ((a) / (float)GRP_H)
 #define GET_ALOC(v, p, n)                                                                      \
     do {                                                                                       \
         v = glGetAttribLocation(p, n);                                                         \
@@ -405,6 +405,9 @@ void gline(float x1, float y1, float x2, float y2, uint32_t c) {}
 
 // draw point
 void gpset(float x1, float y1, uint32_t c) {
+    if (x1<0 || x1>=GRP_W || y1<0 || y1>=GRP_H) {
+        return;
+    }
     int p = y1 * GRP_W + x1;
     vram[g_target][p] = c;
     pthread_mutex_lock(&vram_change_mtx);
@@ -598,7 +601,7 @@ static GLushort sp_vtx_idx[] = {0, 1, 2, 1, 3, 2};
 void draw_and_vsync() {
     // Copy vram to texture
     for (int i = 0; i < GRP_N; i++) {
-        if (!vram_change_flag[g_target]) {
+        if (!vram_change_flag[i]) {
             continue;
         }
         pthread_mutex_lock(&vram_change_mtx);
@@ -630,7 +633,7 @@ void draw_and_vsync() {
         p.y = -s->home.y;
         p.x *= s->scale.x;
         p.y *= s->scale.y;
-        p = v2add(v2rotd(p, s->rot),s->pos);
+        p = v2add(v2rotd(p, s->rot), s->pos);
         sp_vtx[0].x = SCR_X(p.x);
         sp_vtx[0].y = SCR_Y(p.y);
         sp_vtx[0].s = TEX_U(sp[i].uv.x);
@@ -640,7 +643,7 @@ void draw_and_vsync() {
         p.y = -s->home.y;
         p.x *= s->scale.x;
         p.y *= s->scale.y;
-        p = v2add(v2rotd(p, s->rot),s->pos);
+        p = v2add(v2rotd(p, s->rot), s->pos);
         sp_vtx[1].x = SCR_X(p.x);
         sp_vtx[1].y = SCR_Y(p.y);
         sp_vtx[1].s = TEX_U(sp[i].uv.x + sp[i].wh.x);
@@ -650,7 +653,7 @@ void draw_and_vsync() {
         p.y = s->wh.y - s->home.y;
         p.x *= s->scale.x;
         p.y *= s->scale.y;
-        p = v2add(v2rotd(p, s->rot),s->pos);
+        p = v2add(v2rotd(p, s->rot), s->pos);
         sp_vtx[2].x = SCR_X(p.x);
         sp_vtx[2].y = SCR_Y(p.y);
         sp_vtx[2].s = TEX_U(sp[i].uv.x);
@@ -660,7 +663,7 @@ void draw_and_vsync() {
         p.y = s->wh.y - s->home.y;
         p.x *= s->scale.x;
         p.y *= s->scale.y;
-        p = v2add(v2rotd(p, s->rot),s->pos);
+        p = v2add(v2rotd(p, s->rot), s->pos);
         sp_vtx[3].x = SCR_X(p.x);
         sp_vtx[3].y = SCR_Y(p.y);
         sp_vtx[3].s = TEX_U(sp[i].uv.x + sp[i].wh.x);
@@ -727,7 +730,7 @@ int MGL_SDL_Init() {
     }
 
     // ウィンドウの作成
-    wnd = SDL_CreateWindow("window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT,
+    wnd = SDL_CreateWindow("window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT,
                            SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_FULLSCREEN_DESKTOP);
     if (wnd == NULL) {
         fprintf(stderr, "could not create window: %s\n", SDL_GetError());
@@ -739,10 +742,8 @@ int MGL_SDL_Init() {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    SDL_GL_SetSwapInterval(0);
     SDL_GLContext glc = SDL_GL_CreateContext(wnd);
 
-    // Vsync
     SDL_GL_SetSwapInterval(1);
 
     // OpenGLのバージョン表示
