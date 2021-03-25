@@ -1,5 +1,5 @@
 # MGL_RPi
-Minatsu Game Library for Raspberry Pi without X11
+Minatsu Game Library for Raspberry Pi 4 without X11
 
 # コンパイルの準備
 デフォルトのSDL2ライブラリを削除して、SDL2をソースコードからインストールする。
