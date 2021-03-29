@@ -12,7 +12,6 @@ $ sudo apt install libfontconfig-dev qt5-default automake mercurial libtool libf
 $ hg clone http://hg.libsdl.org/SDL
 $ cd SDL
 $ ./autogen.sh
-$ ln -s sdl2-config.cmake.in sdl2-config-version.cmake.in
 $ ./configure --host=arm-raspberry-linux-gnueabihf --disable-pulseaudio --disable-esd --disable-video-wayland --disable-video-x11 --disable-video-opengl --disable-video-rpi --enable-video-kmsdrm
 $ make
 $ sudo make install
